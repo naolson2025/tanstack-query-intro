@@ -18,16 +18,26 @@ function App() {
     setIsError(false);
     setError(null);
     const fetchBooks = async () => {
-      const resp = await fetch('/api/books');
-      if (!resp.ok) {
-        setIsLoading(false);
-        setIsError(true);
-        setError(new Error('Failed to fetch books'));
-        return;
+      let attempts = 0;
+      let success = false;
+      while (attempts < 3 && !success) {
+        try {
+          const resp = await fetch('/api/books');
+          if (!resp.ok) {
+            throw new Error('Failed to fetch books');
+          }
+          const data = await resp.json();
+          setBooks(data);
+          success = true;
+        } catch (err) {
+          attempts += 1;
+          if (attempts === 3) {
+            setIsError(true);
+            setError(err instanceof Error ? err : new Error('Unknown error'));
+          }
+        }
       }
-      const data = await resp.json();
       setIsLoading(false);
-      setBooks(data);
     };
     fetchBooks();
   }, []);
