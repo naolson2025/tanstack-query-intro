@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 type Book = {
   id: number;
@@ -8,28 +7,30 @@ type Book = {
 };
 
 function App() {
-  // const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [counter, setCounter] = useState(0);
-  const { data, isLoading, error, isError } = useQuery<Book[]>({
-    queryKey: ['books'],
-    queryFn: async () => {
-      // return promise or error
+
+  useEffect(() => {
+    setIsLoading(true);
+    setIsError(false);
+    setError(null);
+    const fetchBooks = async () => {
       const resp = await fetch('/api/books');
       if (!resp.ok) {
-        throw new Error('Failed to fetch books');
+        setIsLoading(false);
+        setIsError(true);
+        setError(new Error('Failed to fetch books'));
+        return;
       }
-      return resp.json();
-    },
-  });
-
-  // useEffect(() => {
-  //   const fetchBooks = async () => {
-  //     const resp = await fetch('/api/books');
-  //     const data = await resp.json();
-  //     setBooks(data);
-  //   };
-  //   fetchBooks();
-  // }, []);
+      const data = await resp.json();
+      setIsLoading(false);
+      setBooks(data);
+    };
+    fetchBooks();
+  }, []);
 
   if (isLoading) {
     return (
@@ -43,7 +44,7 @@ function App() {
   if (isError) {
     return (
       <div className="flex justify-center">
-        <h1 className="text-4xl m-4">Error: {error.message}</h1>
+        <h1 className="text-4xl m-4">Error: {error?.message}</h1>
       </div>
     );
   }
@@ -52,7 +53,7 @@ function App() {
     <div className="p-20">
       <h1 className="flex justify-center text-4xl m-4">Book List</h1>
       <ul className="list bg-base-200 rounded-box shadow-md">
-        {data?.map((book: Book) => (
+        {books.map((book: Book) => (
           <li key={book.id} className="list-row">
             {book.title} by {book.author}
           </li>
