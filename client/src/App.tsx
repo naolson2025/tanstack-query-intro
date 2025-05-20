@@ -13,7 +13,11 @@ function App() {
   const { data, isLoading, error, isError } = useQuery<Book[]>({
     queryKey: ['books'],
     queryFn: async () => {
+      // return promise or error
       const resp = await fetch('/api/books');
+      if (!resp.ok) {
+        throw new Error('Failed to fetch books');
+      }
       return resp.json();
     },
   });
@@ -28,7 +32,12 @@ function App() {
   // }, []);
 
   if (isLoading) {
-    return <div className="flex justify-center">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner loading-xl text-primary"></span>
+        <span className="text-2xl m-4">Loading...</span>
+      </div>
+    );
   }
 
   if (isError) {
